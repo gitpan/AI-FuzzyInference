@@ -1,14 +1,14 @@
 
 # A module to implement a fuzzy inference system.
 #
-# Copyright Ala Qumsieh (ala_qumsieh@yahoo.com) 2002.
+# Copyright Ala Qumsieh (aqumsieh@cpan.org) 2002.
 # This program is distributed under the same terms as Perl itself.
 
 package AI::FuzzyInference;
 use strict;
 
 use vars qw/$VERSION/;
-$VERSION = 0.02;
+$VERSION = 0.03;
 
 use AI::FuzzyInference::Set;
 
@@ -366,6 +366,8 @@ sub _aggregate {
 
 	# get implicated sets.
 	my @list = $self->{SET}->listMatching("\Q$var\E:.*:implicated\$");
+
+	next unless @list;
 
 	my $i = 0;
 	my $current = shift @list;

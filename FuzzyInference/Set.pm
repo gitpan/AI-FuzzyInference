@@ -2,7 +2,7 @@
 # A module to implement a fuzzy term set.
 # Only triangular term sets are allowed.
 # 
-# Copyright Ala Qumsieh (ala_qumsieh@yahoo.com) 2002.
+# Copyright Ala Qumsieh (aqumsieh@cpan.org) 2002.
 # This program is distributed under the same terms as Perl itself.
 
 package AI::FuzzyInference::Set;
