@@ -8,7 +8,7 @@ package AI::FuzzyInference;
 use strict;
 
 use vars qw/$VERSION/;
-$VERSION = 0.03;
+$VERSION = 0.04;
 
 use AI::FuzzyInference::Set;
 

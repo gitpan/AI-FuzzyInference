@@ -1,8 +1,8 @@
 
 # A module to implement a fuzzy term set.
 # Only triangular term sets are allowed.
-# 
-# Copyright Ala Qumsieh (aqumsieh@cpan.org) 2002.
+#
+# Copyright Ala Qumsieh (ala_qumsieh@yahoo.com) 2002.
 # This program is distributed under the same terms as Perl itself.
 
 package AI::FuzzyInference::Set;
@@ -10,7 +10,7 @@ use strict;
 
 #our $VERSION = 0.02;
 use vars qw/$VERSION/;  # a bit more backward compatibility.
-$VERSION = 0.02;
+$VERSION = 0.04;
 
 1;
 
@@ -28,7 +28,8 @@ sub new {
 sub _init {
     my $self = shift;
 
-    $self->{TS} = {};
+    $self->{TS}   = {};
+    $self->{AREA} = {};
 }
 
 sub add {
@@ -56,7 +57,7 @@ sub delete {
 	$name,
 	) = @_;
 
-    delete $self->{TS}{$name};
+    delete $self->{$_}{$name} for qw/TS AREA/;
 }
 
 sub membership {
@@ -172,7 +173,7 @@ sub complement {
 
     my @coords = $self->coords($name);
     my $i = 0;
-    return map {$_ = ++$i % 2 ? $_ : 1 - $_} @coords;
+    return map {++$i % 2 ? $_ : 1 - $_} @coords;
 }
 
 sub coords {
@@ -192,7 +193,7 @@ sub scale {  # product implication
 	) = @_;
 
     my $i = 0;
-    my @c = map { $_ *= ++$i % 2 ? 1 : $scale } $self->coords($name);
+    my @c = map { $_ * ++$i % 2 ? 1 : $scale } $self->coords($name);
 
     return @c;
 }
@@ -205,12 +206,15 @@ sub clip {   # min implication
 
     my $i = 0;
     my @c = map {
-	$_ = ++$i % 2 ? $_ : $_ > $val ? $val : $_
+	++$i % 2 ? $_ : $_ > $val ? $val : $_
 	}$self->coords($name);
 
     return @c;
 }
 
+# had to roll my own centroid algorithm.
+# not sure why standard algorithms didn't work
+# correctly!
 sub centroid {   # center of mass.
     my ($self,
 	$name,
@@ -219,21 +223,41 @@ sub centroid {   # center of mass.
     return undef unless $self->exists($name);
 
     my @coords = $self->coords($name);
+    my @ar;
 
-    my $num = 0;
-    my $den = 0;
+    my $x0 = shift @coords;
+    my $y0 = shift @coords;
+    my ($x1, $y1);
 
     while (@coords) {
-	my $x = shift @coords;
-	my $y = shift @coords;
+	$x1 = shift @coords;
+	$y1 = shift @coords;
 
-	$num += $x * $y;
-	$den += $y;
+	my $a1 = abs(0.5 * ($x1 - $x0) * ($y1 - $y0));
+	my $c1 = (1/3) * ($x0 + $x1 + ($y1 > $y0 ? $x1 : $x0));
+
+	my $a2 = abs(($x1 - $x0) * ($y0 < $y1 ? $y0 : $y1));
+	my $c2 = $x0 + 0.5 * ($x1 - $x0);
+
+	my $ta = $a1 + $a2;
+	next if $ta == 0;
+
+	my $c  = $c1 * ($a1 / $ta);
+	$c    += $c2 * ($a2 / $ta);
+
+	push @ar => [$c, $ta];
+    } continue {
+	$x0 = $x1;
+	$y0 = $y1;
     }
 
-    return 0 unless $num && $den;
+    my $ta = 0;
+    $ta += $_->[1] for @ar;
 
-    return $num / $den;
+    my $c = 0;
+    $c += $_->[0] * ($_->[1] / $ta) for @ar;
+
+    return $c;
 }
 
 sub median {
@@ -253,4 +277,47 @@ sub exists {
 	) = @_;
 
     return exists $self->{TS}{$name};
+}
+
+sub uniquify {
+    my $self = shift;
+
+    my @new;
+    my %seen;
+
+    while (@_) {
+	my $x = shift;
+	my $y = shift;
+
+	next if $seen{$x};
+
+	push @new => ($x, $y);
+	$seen{$x} = 1;
+    }
+
+    return @new;
+}
+
+sub area {
+    my ($self, $name) = @_;
+
+    return $self->{AREA}{$name} if exists $self->{AREA}{$name};
+
+    my @coords = $self->coords($name);
+
+    my $x0   = shift @coords;
+    my $y0   = shift @coords;
+    my $area = 0;
+
+    while (@coords) {
+	my $x1 = shift @coords;
+	my $y1 = shift @coords;
+
+	$area += 0.5 * ($x1 - $x0) * ($y1 + $y0);
+
+	$x0 = $x1;
+	$y0 = $y1;
+    }
+
+    return $self->{AREA}{$name} = $area;
 }
