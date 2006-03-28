@@ -10,3 +10,5 @@ Revision history for Perl extension AI::FuzzyInference.
 0.03  Fixed a small bug that gave bogus unitialized warnings.
 
 0.04  Changed the centroid algorithm to make it more accurate.
+
+0.05  Fixed bug 18214 reported on CPAN.

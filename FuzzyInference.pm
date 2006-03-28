@@ -8,7 +8,7 @@ package AI::FuzzyInference;
 use strict;
 
 use vars qw/$VERSION/;
-$VERSION = 0.04;
+$VERSION = 0.05;
 
 use AI::FuzzyInference::Set;
 
@@ -400,21 +400,23 @@ sub _aggregate {
 # output variable.
 
 sub _implicate {
-    my $self = shift;
+  my $self = shift;
 
-    my $_implication = $self->{IMPLICATION};
+  my $_implication = $self->{IMPLICATION};
 
-    for my $ref (@{$self->{FIRED}}) {
-	my ($i, $val) = @$ref;
-	my ($var, $ts) = split /=/, $self->{RULES}[$i][1];
+  my %ind;
 
-	if ($val > 0) {
-	    #if (1) {
-	    my @c = $self->{SET}->$_implication("$var:$ts", $val);
-	    my @u = @{$self->{OUTVARS}{$var}}; # the universe
-	    $self->{SET}->add("$var:$ts:implicated", @u, @c);
-	}
+  for my $ref (@{$self->{FIRED}}) {
+    my ($i, $val) = @$ref;
+    my ($var, $ts) = split /=/, $self->{RULES}[$i][1];
+
+    if ($val > 0) {
+      $ind{$var}{$ts}++;
+      my @c = $self->{SET}->$_implication("$var:$ts", $val);
+      my @u = @{$self->{OUTVARS}{$var}}; # the universe
+      $self->{SET}->add("$var:$ts:$ind{$var}{$ts}:implicated", @u, @c);
     }
+  }
 }
 
 # sub _fuzzify() - private method.
@@ -821,5 +823,5 @@ Copyright 2002, Ala Qumsieh. All rights reserved.
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
 
-Address bug reports and comments to: ala_qumsieh@yahoo.com.
+Address bug reports and comments to: aqumsieh@cpan.org
 
